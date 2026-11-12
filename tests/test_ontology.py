@@ -91,5 +91,15 @@ class OntologyTests(unittest.TestCase):
         self.assertIn('"Book" -> "Resource" [label="is-a"];', dot)
         self.assertIn('"Book" -> "Resource" [label="relatedTo"];', dot)
 
+    def test_instances_require_a_known_class(self):
+        data = {
+            "classes": [{"id": "Book", "label": "Book"}],
+            "instances": [{"id": "sampleBook", "class": "Book"}],
+        }
+        self.assertEqual(validate(data), [])
+        self.assertEqual(summarize(data)["instances"], 1)
+        data["instances"][0]["class"] = "Missing"
+        self.assertEqual(validate(data), ["instances[0].class: unknown class"])
+
 if __name__ == "__main__":
     unittest.main()
