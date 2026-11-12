@@ -88,25 +88,40 @@ def validate(document):
     return errors
 
 
+def read_and_validate(file):
+    try:
+        document = json.loads(file.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        return None, [str(error)]
+    return document, validate(document)
+
+
+def validation_result(file, errors):
+    return {"file": str(file), "valid": not errors, "errors": errors}
+
+
+def print_validation(file, errors):
+    if errors:
+        for error in errors:
+            print(f"{file}: {error}", file=sys.stderr)
+    else:
+        print(f"{file}: valid ontology")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     validate_command = commands.add_parser("validate", help="validate an ontology")
     validate_command.add_argument("file", type=Path)
+    validate_command.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
 
-    try:
-        document = json.loads(args.file.read_text(encoding="utf-8-sig"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        print(f"{args.file}: {error}", file=sys.stderr)
-        return 1
-
-    errors = validate(document)
-    if errors:
-        print("\n".join(errors), file=sys.stderr)
-        return 1
-    print(f"{args.file}: valid ontology")
-    return 0
+    errors = read_and_validate(args.file)[1]
+    if args.format == "json":
+        print(json.dumps(validation_result(args.file, errors)))
+    else:
+        print_validation(args.file, errors)
+    return int(bool(errors))
 
 
 if __name__ == "__main__":
