@@ -156,6 +156,27 @@ def export_dot(document):
     return "\n".join(lines)
 
 
+def compare(left, right):
+    def index(document, kind):
+        records = {}
+        for item in document.get(kind, []):
+            if kind == "classes":
+                item = {**item, "parents": sorted(item.get("parents", []))}
+            records[item["id"]] = item
+        return records
+
+    output = {}
+    for kind in ("classes", "relations", "instances"):
+        before = index(left, kind)
+        after = index(right, kind)
+        output[kind] = {
+            "added": sorted(after.keys() - before.keys()),
+            "removed": sorted(before.keys() - after.keys()),
+            "changed": sorted(key for key in before.keys() & after.keys() if before[key] != after[key]),
+        }
+    return output
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -169,7 +190,22 @@ def main(argv=None):
     ancestors_command.add_argument("class_id")
     dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
     dot_command.add_argument("file", type=Path)
+    diff_command = commands.add_parser("diff", help="compare two valid ontologies")
+    diff_command.add_argument("before", type=Path)
+    diff_command.add_argument("after", type=Path)
     args = parser.parse_args(argv)
+
+    if args.command == "diff":
+        before, before_errors = read_and_validate(args.before)
+        after, after_errors = read_and_validate(args.after)
+        if before_errors or after_errors:
+            if before_errors:
+                print_validation(args.before, before_errors)
+            if after_errors:
+                print_validation(args.after, after_errors)
+            return 1
+        print(json.dumps(compare(before, after)))
+        return 0
 
     if args.command != "validate":
         document, errors = read_and_validate(args.file)
