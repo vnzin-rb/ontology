@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from ontology import validate
@@ -31,6 +34,20 @@ class OntologyTests(unittest.TestCase):
         data = {"classes": [{"id": "A", "label": "A"}, {"id": "A", "label": "A"}]}
         self.assertEqual(validate(data), ["classes[1].id: duplicate identifier 'A'"])
 
+
+    def test_validation_json_is_machine_readable_on_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "invalid.json"
+            source.write_text('{"classes": []', encoding="utf-8")
+            run = subprocess.run(
+                [sys.executable, "-B", "ontology.py", "validate", str(source), "--format", "json"],
+                capture_output=True, text=True, check=False,
+            )
+        payload = json.loads(run.stdout)
+        self.assertEqual(run.returncode, 1)
+        self.assertFalse(payload["valid"])
+        self.assertTrue(payload["errors"])
+        self.assertEqual(run.stderr, "")
 
 if __name__ == "__main__":
     unittest.main()
