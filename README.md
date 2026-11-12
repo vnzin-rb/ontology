@@ -15,6 +15,8 @@ python ontology.py diff examples/library.json examples/transit.json
 
 A validação retorna código 1 quando algum arquivo tem erro e código 0 quando todos são válidos. Use `validate --format json` para obter diagnóstico estruturado em scripts.
 
+Para instalar o comando localmente, rode `python -m pip install .` e use `ontology` no lugar de `python ontology.py`.
+
 ## Formato
 
 | Campo | Conteúdo |
