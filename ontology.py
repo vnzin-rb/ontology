@@ -117,6 +117,20 @@ def summarize(document):
     }
 
 
+def ancestors(document, class_id):
+    parents = {item["id"]: item.get("parents", []) for item in document["classes"]}
+    if class_id not in parents:
+        raise KeyError(class_id)
+    found = set()
+    pending = deque(parents[class_id])
+    while pending:
+        parent = pending.popleft()
+        if parent not in found:
+            found.add(parent)
+            pending.extend(parents[parent])
+    return sorted(found)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -125,14 +139,22 @@ def main(argv=None):
     validate_command.add_argument("--format", choices=("text", "json"), default="text")
     summary_command = commands.add_parser("summary", help="summarize a valid ontology")
     summary_command.add_argument("file", type=Path)
+    ancestors_command = commands.add_parser("ancestors", help="list a class's ancestors")
+    ancestors_command.add_argument("file", type=Path)
+    ancestors_command.add_argument("class_id")
     args = parser.parse_args(argv)
 
-    if args.command == "summary":
+    if args.command != "validate":
         document, errors = read_and_validate(args.file)
         if errors:
             print_validation(args.file, errors)
             return 1
-        print(json.dumps(summarize(document)))
+        try:
+            output = summarize(document) if args.command == "summary" else ancestors(document, args.class_id)
+        except KeyError:
+            print(f"{args.file}: unknown class {args.class_id!r}", file=sys.stderr)
+            return 1
+        print(json.dumps(output))
         return 0
 
     validations = [(file, read_and_validate(file)[1]) for file in args.files]
