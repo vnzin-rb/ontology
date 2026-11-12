@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from ontology import ancestors, compare, export_dot, summarize, validate
+from ontology import ancestors, compare, export_dot, relations_for, summarize, validate
 
 
 class OntologyTests(unittest.TestCase):
@@ -115,6 +115,16 @@ class OntologyTests(unittest.TestCase):
         self.assertEqual(compare(before, after)["classes"], {
             "added": ["New"], "removed": ["Old"], "changed": ["Book"],
         })
+
+    def test_relations_keeps_directions_separate(self):
+        data = {
+            "classes": [{"id": "Book", "label": "Book"}, {"id": "Author", "label": "Author"}],
+            "relations": [
+                {"id": "writtenBy", "source": "Book", "target": "Author"},
+                {"id": "reviewed", "source": "Author", "target": "Book"},
+            ],
+        }
+        self.assertEqual(relations_for(data, "Book"), {"incoming": ["reviewed"], "outgoing": ["writtenBy"]})
 
 if __name__ == "__main__":
     unittest.main()

@@ -177,6 +177,16 @@ def compare(left, right):
     return output
 
 
+def relations_for(document, class_id):
+    if not any(item["id"] == class_id for item in document["classes"]):
+        raise KeyError(class_id)
+    relations = document.get("relations", [])
+    return {
+        "incoming": sorted(item["id"] for item in relations if item["target"] == class_id),
+        "outgoing": sorted(item["id"] for item in relations if item["source"] == class_id),
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -188,6 +198,9 @@ def main(argv=None):
     ancestors_command = commands.add_parser("ancestors", help="list a class's ancestors")
     ancestors_command.add_argument("file", type=Path)
     ancestors_command.add_argument("class_id")
+    relations_command = commands.add_parser("relations", help="list a class's incoming and outgoing relations")
+    relations_command.add_argument("file", type=Path)
+    relations_command.add_argument("class_id")
     dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
     dot_command.add_argument("file", type=Path)
     diff_command = commands.add_parser("diff", help="compare two valid ontologies")
@@ -215,8 +228,12 @@ def main(argv=None):
         if args.command == "export-dot":
             print(export_dot(document))
             return 0
+        if args.command == "summary":
+            print(json.dumps(summarize(document)))
+            return 0
+        lookup = ancestors if args.command == "ancestors" else relations_for
         try:
-            output = summarize(document) if args.command == "summary" else ancestors(document, args.class_id)
+            output = lookup(document, args.class_id)
         except KeyError:
             print(f"{args.file}: unknown class {args.class_id!r}", file=sys.stderr)
             return 1
