@@ -108,13 +108,32 @@ def print_validation(file, errors):
         print(f"{file}: valid ontology")
 
 
+def summarize(document):
+    classes = document["classes"]
+    return {
+        "classes": len(classes),
+        "relations": len(document.get("relations", [])),
+        "roots": sorted(item["id"] for item in classes if not item.get("parents")),
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     validate_command = commands.add_parser("validate", help="validate an ontology")
     validate_command.add_argument("files", nargs="+", type=Path)
     validate_command.add_argument("--format", choices=("text", "json"), default="text")
+    summary_command = commands.add_parser("summary", help="summarize a valid ontology")
+    summary_command.add_argument("file", type=Path)
     args = parser.parse_args(argv)
+
+    if args.command == "summary":
+        document, errors = read_and_validate(args.file)
+        if errors:
+            print_validation(args.file, errors)
+            return 1
+        print(json.dumps(summarize(document)))
+        return 0
 
     validations = [(file, read_and_validate(file)[1]) for file in args.files]
     if args.format == "json":

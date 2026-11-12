@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from ontology import validate
+from ontology import summarize, validate
 
 
 class OntologyTests(unittest.TestCase):
@@ -59,6 +59,13 @@ class OntologyTests(unittest.TestCase):
             )
         self.assertEqual(run.returncode, 1)
         self.assertEqual([item["valid"] for item in json.loads(run.stdout)], [True, False])
+
+    def test_summary_lists_root_classes(self):
+        data = {"classes": [
+            {"id": "Child", "label": "Child", "parents": ["Root"]},
+            {"id": "Root", "label": "Root"},
+        ]}
+        self.assertEqual(summarize(data), {"classes": 2, "relations": 0, "roots": ["Root"]})
 
 if __name__ == "__main__":
     unittest.main()
