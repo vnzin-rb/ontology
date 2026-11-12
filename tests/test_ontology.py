@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from ontology import summarize, validate
+from ontology import ancestors, summarize, validate
 
 
 class OntologyTests(unittest.TestCase):
@@ -66,6 +66,17 @@ class OntologyTests(unittest.TestCase):
             {"id": "Root", "label": "Root"},
         ]}
         self.assertEqual(summarize(data), {"classes": 2, "relations": 0, "roots": ["Root"]})
+
+    def test_ancestors_handles_shared_paths(self):
+        data = {"classes": [
+            {"id": "Root", "label": "Root"},
+            {"id": "Left", "label": "Left", "parents": ["Root"]},
+            {"id": "Right", "label": "Right", "parents": ["Root"]},
+            {"id": "Leaf", "label": "Leaf", "parents": ["Left", "Right"]},
+        ]}
+        self.assertEqual(ancestors(data, "Leaf"), ["Left", "Right", "Root"])
+        with self.assertRaises(KeyError):
+            ancestors(data, "Missing")
 
 if __name__ == "__main__":
     unittest.main()
