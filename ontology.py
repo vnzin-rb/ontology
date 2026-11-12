@@ -45,6 +45,7 @@ def validate(document):
     errors = []
     classes = collect_records(document.get("classes"), "classes", errors)
     relations = collect_records(document.get("relations", []), "relations", errors)
+    instances = collect_records(document.get("instances", []), "instances", errors)
     children = {class_id: [] for class_id in classes}
     indegree = dict.fromkeys(classes, 0)
 
@@ -85,6 +86,13 @@ def validate(document):
             if not identifier(endpoint) or endpoint not in classes:
                 errors.append(f"{path}.{field}: unknown class")
 
+    for path, item in instances.values():
+        class_id = item.get("class")
+        if not identifier(class_id) or class_id not in classes:
+            errors.append(f"{path}.class: unknown class")
+        if "label" in item and (not isinstance(item["label"], str) or not item["label"].strip()):
+            errors.append(f"{path}.label: expected a non-empty string")
+
     return errors
 
 
@@ -113,6 +121,7 @@ def summarize(document):
     return {
         "classes": len(classes),
         "relations": len(document.get("relations", [])),
+        **({"instances": len(document["instances"])} if "instances" in document else {}),
         "roots": sorted(item["id"] for item in classes if not item.get("parents")),
     }
 
