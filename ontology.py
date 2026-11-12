@@ -112,16 +112,18 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     validate_command = commands.add_parser("validate", help="validate an ontology")
-    validate_command.add_argument("file", type=Path)
+    validate_command.add_argument("files", nargs="+", type=Path)
     validate_command.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
 
-    errors = read_and_validate(args.file)[1]
+    validations = [(file, read_and_validate(file)[1]) for file in args.files]
     if args.format == "json":
-        print(json.dumps(validation_result(args.file, errors)))
+        payload = [validation_result(file, errors) for file, errors in validations]
+        print(json.dumps(payload[0] if len(payload) == 1 else payload))
     else:
-        print_validation(args.file, errors)
-    return int(bool(errors))
+        for file, errors in validations:
+            print_validation(file, errors)
+    return int(any(errors for _, errors in validations))
 
 
 if __name__ == "__main__":

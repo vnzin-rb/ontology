@@ -49,5 +49,16 @@ class OntologyTests(unittest.TestCase):
         self.assertTrue(payload["errors"])
         self.assertEqual(run.stderr, "")
 
+    def test_validation_accepts_multiple_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing.json"
+            run = subprocess.run(
+                [sys.executable, "-B", "ontology.py", "validate",
+                 "examples/library.json", str(missing), "--format", "json"],
+                capture_output=True, text=True, check=False,
+            )
+        self.assertEqual(run.returncode, 1)
+        self.assertEqual([item["valid"] for item in json.loads(run.stdout)], [True, False])
+
 if __name__ == "__main__":
     unittest.main()
