@@ -1,0 +1,33 @@
+{
+  "classes": [
+    {
+      "id": "Stop",
+      "label": "Parada"
+    },
+    {
+      "id": "Station",
+      "label": "Estação",
+      "parents": [
+        "Stop"
+      ]
+    },
+    {
+      "id": "Route",
+      "label": "Linha"
+    }
+  ],
+  "relations": [
+    {
+      "id": "serves",
+      "source": "Route",
+      "target": "Stop"
+    }
+  ],
+  "instances": [
+    {
+      "id": "CentralStation",
+      "class": "Station",
+      "label": "Estação Central"
+    }
+  ]
+}
