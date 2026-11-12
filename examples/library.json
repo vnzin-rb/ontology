@@ -1,0 +1,10 @@
+{
+  "classes": [
+    {"id": "Resource", "label": "Resource"},
+    {"id": "Book", "label": "Book", "parents": ["Resource"]},
+    {"id": "Author", "label": "Author"}
+  ],
+  "relations": [
+    {"id": "writtenBy", "source": "Book", "target": "Author"}
+  ]
+}
