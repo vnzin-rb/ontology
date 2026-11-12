@@ -131,6 +131,22 @@ def ancestors(document, class_id):
     return sorted(found)
 
 
+def export_dot(document):
+    def quote(value):
+        return json.dumps(value, ensure_ascii=False)
+
+    lines = ["digraph ontology {"]
+    for item in sorted(document["classes"], key=lambda record: record["id"]):
+        class_id = quote(item["id"])
+        lines.append(f"  {class_id} [label={quote(item['label'])}];")
+        for parent in sorted(item.get("parents", [])):
+            lines.append(f'  {class_id} -> {quote(parent)} [label="is-a"];')
+    for relation in sorted(document.get("relations", []), key=lambda record: record["id"]):
+        lines.append(f"  {quote(relation['source'])} -> {quote(relation['target'])} [label={quote(relation['id'])}];")
+    lines.append("}")
+    return "\n".join(lines)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -142,6 +158,8 @@ def main(argv=None):
     ancestors_command = commands.add_parser("ancestors", help="list a class's ancestors")
     ancestors_command.add_argument("file", type=Path)
     ancestors_command.add_argument("class_id")
+    dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
+    dot_command.add_argument("file", type=Path)
     args = parser.parse_args(argv)
 
     if args.command != "validate":
@@ -149,6 +167,9 @@ def main(argv=None):
         if errors:
             print_validation(args.file, errors)
             return 1
+        if args.command == "export-dot":
+            print(export_dot(document))
+            return 0
         try:
             output = summarize(document) if args.command == "summary" else ancestors(document, args.class_id)
         except KeyError:

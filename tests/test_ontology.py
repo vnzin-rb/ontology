@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from ontology import ancestors, summarize, validate
+from ontology import ancestors, export_dot, summarize, validate
 
 
 class OntologyTests(unittest.TestCase):
@@ -77,6 +77,19 @@ class OntologyTests(unittest.TestCase):
         self.assertEqual(ancestors(data, "Leaf"), ["Left", "Right", "Root"])
         with self.assertRaises(KeyError):
             ancestors(data, "Missing")
+
+    def test_dot_quotes_labels_and_includes_edges(self):
+        data = {
+            "classes": [
+                {"id": "Book", "label": 'A "quoted" book', "parents": ["Resource"]},
+                {"id": "Resource", "label": "Resource"},
+            ],
+            "relations": [{"id": "relatedTo", "source": "Book", "target": "Resource"}],
+        }
+        dot = export_dot(data)
+        self.assertIn('[label=' + json.dumps(data["classes"][0]["label"]) + ']', dot)
+        self.assertIn('"Book" -> "Resource" [label="is-a"];', dot)
+        self.assertIn('"Book" -> "Resource" [label="relatedTo"];', dot)
 
 if __name__ == "__main__":
     unittest.main()
