@@ -27,6 +27,7 @@ Para instalar o comando localmente, rode `python -m pip install .` e use `ontolo
 | `instances` | Lista opcional com `id`, `class` e `label` opcional. |
 
 Cada identificador é único dentro da sua lista. As referências apontam para classes existentes e a herança é acíclica. Use [ontology.schema.json](ontology.schema.json) para validar a estrutura no editor.
+Cada chave de um objeto JSON pode aparecer uma única vez dentro desse objeto.
 
 ```sh
 python -m unittest discover -s tests

@@ -60,6 +60,22 @@ class OntologyTests(unittest.TestCase):
         self.assertEqual(run.returncode, 1)
         self.assertEqual([item["valid"] for item in json.loads(run.stdout)], [True, False])
 
+    def test_validation_rejects_duplicate_json_keys(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "duplicate.json"
+            for contents, key in [
+                ('{"classes": [], "classes": []}', "classes"),
+                ('{"classes": [{"id": "A", "id": "B", "label": "B"}]}', "id"),
+            ]:
+                with self.subTest(key=key):
+                    source.write_text(contents, encoding="utf-8")
+                    run = subprocess.run(
+                        [sys.executable, "-B", "ontology.py", "validate", str(source), "--format", "json"],
+                        capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(run.returncode, 1)
+                    self.assertEqual(json.loads(run.stdout)["errors"], [f"duplicate JSON key {key!r}"])
+
     def test_summary_lists_root_classes(self):
         data = {"classes": [
             {"id": "Child", "label": "Child", "parents": ["Root"]},
