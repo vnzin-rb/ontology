@@ -245,6 +245,7 @@ def main(argv=None):
     dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
     dot_command.add_argument("file", type=Path)
     dot_command.add_argument("--include-instances", action="store_true", help="include instances as nodes")
+    dot_command.add_argument("-o", "--output", type=Path, help="write the graph to a UTF-8 file")
     diff_command = commands.add_parser("diff", help="compare two valid ontologies")
     diff_command.add_argument("before", type=Path)
     diff_command.add_argument("after", type=Path)
@@ -268,7 +269,15 @@ def main(argv=None):
             print_validation(args.file, errors)
             return 1
         if args.command == "export-dot":
-            print(export_dot(document, args.include_instances))
+            graph = export_dot(document, args.include_instances)
+            if args.output is None:
+                print(graph)
+                return 0
+            try:
+                args.output.write_text(graph + "\n", encoding="utf-8")
+            except (OSError, UnicodeError) as error:
+                print(f"{args.output}: {error}", file=sys.stderr)
+                return 1
             return 0
         if args.command == "summary":
             print(json.dumps(summarize(document)))
