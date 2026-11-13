@@ -159,7 +159,7 @@ def reachable_classes(edges, class_id):
     return sorted(found)
 
 
-def export_dot(document):
+def export_dot(document, include_instances=False):
     def quote(value):
         return json.dumps(value, ensure_ascii=False)
 
@@ -171,6 +171,12 @@ def export_dot(document):
             lines.append(f'  {class_id} -> {quote(parent)} [label="is-a"];')
     for relation in sorted(document.get("relations", []), key=lambda record: record["id"]):
         lines.append(f"  {quote(relation['source'])} -> {quote(relation['target'])} [label={quote(relation['id'])}];")
+    if include_instances:
+        for instance in sorted(document.get("instances", []), key=lambda record: record["id"]):
+            node = quote(f"instance:{instance['id']}")
+            label = quote(instance.get("label", instance["id"]))
+            lines.append(f"  {node} [label={label}, shape=box];")
+            lines.append(f'  {node} -> {quote(instance["class"])} [label="instance-of"];')
     lines.append("}")
     return "\n".join(lines)
 
@@ -238,6 +244,7 @@ def main(argv=None):
     instances_command.add_argument("--include-descendants", action="store_true")
     dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
     dot_command.add_argument("file", type=Path)
+    dot_command.add_argument("--include-instances", action="store_true", help="include instances as nodes")
     diff_command = commands.add_parser("diff", help="compare two valid ontologies")
     diff_command.add_argument("before", type=Path)
     diff_command.add_argument("after", type=Path)
@@ -261,7 +268,7 @@ def main(argv=None):
             print_validation(args.file, errors)
             return 1
         if args.command == "export-dot":
-            print(export_dot(document))
+            print(export_dot(document, args.include_instances))
             return 0
         if args.command == "summary":
             print(json.dumps(summarize(document)))

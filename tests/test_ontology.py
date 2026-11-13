@@ -119,6 +119,16 @@ class OntologyTests(unittest.TestCase):
         self.assertIn('"Book" -> "Resource" [label="is-a"];', dot)
         self.assertIn('"Book" -> "Resource" [label="relatedTo"];', dot)
 
+    def test_dot_instances_do_not_collide_with_class_ids(self):
+        data = {
+            "classes": [{"id": "Book", "label": "Book"}],
+            "instances": [{"id": "Book", "class": "Book"}],
+        }
+        self.assertNotIn('"instance:Book"', export_dot(data))
+        dot = export_dot(data, include_instances=True)
+        self.assertIn('"instance:Book" [label="Book", shape=box];', dot)
+        self.assertIn('"instance:Book" -> "Book" [label="instance-of"];', dot)
+
     def test_instances_require_a_known_class(self):
         data = {
             "classes": [{"id": "Book", "label": "Book"}],
