@@ -12,7 +12,7 @@ python ontology.py descendants examples/transit.json Stop
 python ontology.py relations examples/library.json Book
 python ontology.py instances examples/transit.json Stop --include-descendants
 python ontology.py export-dot examples/library.json > library.dot
-python ontology.py export-dot examples/transit.json --include-instances > transit.dot
+python ontology.py export-dot examples/transit.json --include-instances -o transit.dot
 python ontology.py diff examples/library.json examples/transit.json
 ```
 
