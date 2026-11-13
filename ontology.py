@@ -128,15 +128,25 @@ def summarize(document):
 
 def ancestors(document, class_id):
     parents = {item["id"]: item.get("parents", []) for item in document["classes"]}
-    if class_id not in parents:
-        raise KeyError(class_id)
+    return reachable_classes(parents, class_id)
+
+
+def descendants(document, class_id):
+    children = {item["id"]: [] for item in document["classes"]}
+    for item in document["classes"]:
+        for parent in item.get("parents", []):
+            children[parent].append(item["id"])
+    return reachable_classes(children, class_id)
+
+
+def reachable_classes(edges, class_id):
     found = set()
-    pending = deque(parents[class_id])
+    pending = deque(edges[class_id])
     while pending:
-        parent = pending.popleft()
-        if parent not in found:
-            found.add(parent)
-            pending.extend(parents[parent])
+        neighbor = pending.popleft()
+        if neighbor not in found:
+            found.add(neighbor)
+            pending.extend(edges[neighbor])
     return sorted(found)
 
 
@@ -198,6 +208,9 @@ def main(argv=None):
     ancestors_command = commands.add_parser("ancestors", help="list a class's ancestors")
     ancestors_command.add_argument("file", type=Path)
     ancestors_command.add_argument("class_id")
+    descendants_command = commands.add_parser("descendants", help="list a class's descendants")
+    descendants_command.add_argument("file", type=Path)
+    descendants_command.add_argument("class_id")
     relations_command = commands.add_parser("relations", help="list a class's incoming and outgoing relations")
     relations_command.add_argument("file", type=Path)
     relations_command.add_argument("class_id")
@@ -231,9 +244,9 @@ def main(argv=None):
         if args.command == "summary":
             print(json.dumps(summarize(document)))
             return 0
-        lookup = ancestors if args.command == "ancestors" else relations_for
+        lookups = {"ancestors": ancestors, "descendants": descendants, "relations": relations_for}
         try:
-            output = lookup(document, args.class_id)
+            output = lookups[args.command](document, args.class_id)
         except KeyError:
             print(f"{args.file}: unknown class {args.class_id!r}", file=sys.stderr)
             return 1

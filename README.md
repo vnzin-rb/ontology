@@ -8,6 +8,7 @@ Ferramenta de linha de comando para validar e explorar ontologias pequenas em JS
 python ontology.py validate examples/library.json examples/transit.json
 python ontology.py summary examples/transit.json
 python ontology.py ancestors examples/transit.json Station
+python ontology.py descendants examples/transit.json Station
 python ontology.py relations examples/library.json Book
 python ontology.py export-dot examples/library.json > library.dot
 python ontology.py diff examples/library.json examples/transit.json

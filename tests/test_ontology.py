@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from ontology import ancestors, compare, export_dot, relations_for, summarize, validate
+from ontology import ancestors, compare, descendants, export_dot, relations_for, summarize, validate
 
 
 class OntologyTests(unittest.TestCase):
@@ -77,6 +77,18 @@ class OntologyTests(unittest.TestCase):
         self.assertEqual(ancestors(data, "Leaf"), ["Left", "Right", "Root"])
         with self.assertRaises(KeyError):
             ancestors(data, "Missing")
+
+    def test_descendants_are_sorted_and_unique(self):
+        data = {"classes": [
+            {"id": "Root", "label": "Root"},
+            {"id": "Right", "label": "Right", "parents": ["Root"]},
+            {"id": "Left", "label": "Left", "parents": ["Root"]},
+            {"id": "Leaf", "label": "Leaf", "parents": ["Left", "Right"]},
+        ]}
+        self.assertEqual(descendants(data, "Root"), ["Leaf", "Left", "Right"])
+        self.assertEqual(descendants(data, "Leaf"), [])
+        with self.assertRaises(KeyError):
+            descendants(data, "Missing")
 
     def test_dot_quotes_labels_and_includes_edges(self):
         data = {
