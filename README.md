@@ -8,13 +8,16 @@ Ferramenta de linha de comando para validar e explorar ontologias pequenas em JS
 python ontology.py validate examples/library.json examples/transit.json
 python ontology.py summary examples/transit.json
 python ontology.py ancestors examples/transit.json Station
-python ontology.py descendants examples/transit.json Station
+python ontology.py descendants examples/transit.json Stop
 python ontology.py relations examples/library.json Book
+python ontology.py instances examples/transit.json Stop --include-descendants
 python ontology.py export-dot examples/library.json > library.dot
 python ontology.py diff examples/library.json examples/transit.json
 ```
 
 A validação retorna código 1 quando algum arquivo tem erro e código 0 quando todos são válidos. Use `validate --format json` para obter diagnóstico estruturado em scripts.
+
+O comando `instances` retorna os IDs das instâncias da classe. A opção `--include-descendants` inclui as instâncias das subclasses diretas e indiretas.
 
 Para instalar o comando localmente, rode `python -m pip install .` e use `ontology` no lugar de `python ontology.py`.
 

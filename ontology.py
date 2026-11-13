@@ -206,6 +206,15 @@ def relations_for(document, class_id):
     }
 
 
+def instances_for(document, class_id, include_descendants=False):
+    if not any(item["id"] == class_id for item in document["classes"]):
+        raise KeyError(class_id)
+    class_ids = {class_id}
+    if include_descendants:
+        class_ids.update(descendants(document, class_id))
+    return sorted(item["id"] for item in document.get("instances", []) if item["class"] in class_ids)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -223,6 +232,10 @@ def main(argv=None):
     relations_command = commands.add_parser("relations", help="list a class's incoming and outgoing relations")
     relations_command.add_argument("file", type=Path)
     relations_command.add_argument("class_id")
+    instances_command = commands.add_parser("instances", help="list a class's instances")
+    instances_command.add_argument("file", type=Path)
+    instances_command.add_argument("class_id")
+    instances_command.add_argument("--include-descendants", action="store_true")
     dot_command = commands.add_parser("export-dot", help="export the class graph as DOT")
     dot_command.add_argument("file", type=Path)
     diff_command = commands.add_parser("diff", help="compare two valid ontologies")
@@ -255,7 +268,10 @@ def main(argv=None):
             return 0
         lookups = {"ancestors": ancestors, "descendants": descendants, "relations": relations_for}
         try:
-            output = lookups[args.command](document, args.class_id)
+            if args.command == "instances":
+                output = instances_for(document, args.class_id, args.include_descendants)
+            else:
+                output = lookups[args.command](document, args.class_id)
         except KeyError:
             print(f"{args.file}: unknown class {args.class_id!r}", file=sys.stderr)
             return 1

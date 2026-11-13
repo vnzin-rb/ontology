@@ -129,6 +129,16 @@ class OntologyTests(unittest.TestCase):
         data["instances"][0]["class"] = "Missing"
         self.assertEqual(validate(data), ["instances[0].class: unknown class"])
 
+    def test_instances_command_can_include_subclasses(self):
+        for arguments, expected in [([], []), (["--include-descendants"], ["CentralStation"])]:
+            with self.subTest(arguments=arguments):
+                run = subprocess.run(
+                    [sys.executable, "-B", "ontology.py", "instances", "examples/transit.json", "Stop", *arguments],
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(run.returncode, 0, run.stderr)
+                self.assertEqual(json.loads(run.stdout), expected)
+
     def test_diff_reports_ids_and_ignores_class_order(self):
         before = {"classes": [
             {"id": "Book", "label": "Livro"},
